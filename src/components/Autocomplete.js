@@ -71,11 +71,6 @@ const Autocomplete = ({ panMap }) => {
       console.log("Error: ", error);
     });
 
-    // fetch('https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.9488651,151.0494066&radius=500&type=park&key=' + process.env.REACT_APP_GOOGLE_KEY)
-    // .then(response => response.json())
-    // .then(data => console.log(data))
-    // .catch(error => console.log(error));
-
   }, [address]);
   
   return (

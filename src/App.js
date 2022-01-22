@@ -245,9 +245,12 @@ function App() {
             />
           )}
           {selected ? (<InfoWindow
-            position={{lat: selected.lat+0.001, lng: selected.lng}}
+            position={{lat: selected.lat, lng: selected.lng}}
             onCloseClick={() => setSelected(null)}
             zIndex={1}
+            options={{
+              pixelOffset: new window.google.maps.Size(0,-43),
+            }}
           >
             <p>{selected.lat}, {selected.lng}</p>
           </InfoWindow>) : null

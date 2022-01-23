@@ -5,6 +5,8 @@ import Autocomplete from './components/Autocomplete';
 
 import { computeDistanceBetween, computeOffset, interpolate } from 'spherical-geometry-js'
 
+import mapStyles from './mapStyles';
+
 function App() {
 
   const mapContainerStyle = {
@@ -25,26 +27,30 @@ function App() {
     libraries,
   });
 
-  const [markers, setMarkers] = React.useState([])
-  const [selected, setSelected] = React.useState(null)
-  const [currMarker, setCurrMarker] = React.useState(null)
-  const [parks, setParks] = React.useState([])
-  const [nextToken, setNextToken] = React.useState(null)
-  const [searchMarker, setSearchMarker] = React.useState(null)
-  const [valid, setValid] = React.useState(true)
-  const [range, setRange] = React.useState(10000)
+  const [markers, setMarkers] = React.useState([]);
+  const [selected, setSelected] = React.useState(null);
+  const [currMarker, setCurrMarker] = React.useState(null);
+  const [parks, setParks] = React.useState([]);
+  const [nextToken, setNextToken] = React.useState(null);
+  const [searchMarker, setSearchMarker] = React.useState(null);
+  const [valid, setValid] = React.useState(true);
+  const [range, setRange] = React.useState(10000);
+  const [selectedPark, setSelectedPark] = React.useState(null);
 
   const onMapClick = React.useCallback((e) => {
     setCurrMarker({
+      valid: true,
       address: null,
       lat: e.latLng.lat(),
       lng: e.latLng.lng()
-    })
+    });
     // console.log({
     //   address: null,
     //   lat: e.latLng.lat(),
     //   lng: e.latLng.lng()
     // })
+    setSelected(null);
+    setSelectedPark(null);
   }, []);
 
   const mapRef = React.useRef();
@@ -99,8 +105,10 @@ function App() {
   const panMap = ( {address, lat, lng} ) => {
     mapRef.current.panTo({lat, lng});
     mapRef.current.setZoom(16);
+
     // console.log({address, lat, lng})
-    setCurrMarker({address, lat, lng})
+    // console.log({valid: true, address, lat, lng})
+    setCurrMarker({valid: null, address, lat, lng})
   }
 
   const confirmMarker = () => {
@@ -108,15 +116,74 @@ function App() {
     setCurrMarker(null);
   }
 
+  const locateUser = () => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        mapRef.current.panTo({lat: position.coords.latitude, lng: position.coords.longitude});
+        mapRef.current.setZoom(16);
+        setCurrMarker({lat: position.coords.latitude, lng: position.coords.longitude})
+        setSelected(null);
+        setSelectedPark(null);
+      },
+      () => null,
+    )
+  }
+
   const checkOverlap = () => {
+    var invalidPoints = []
     for (var count = 0; count < markers.length; count++) {
+      var matches = 0
       for (var count1 = 0; count1 < markers.length; count1++) {
-        if (computeDistanceBetween({lat: markers[count].lat, lng: markers[count].lng}, {lat: markers[count1].lat, lng: markers[count1].lng}) > range * 2) {
-          return false;
+        if (computeDistanceBetween({lat: markers[count].lat, lng: markers[count].lng}, {lat: markers[count1].lat, lng: markers[count1].lng}) <= range * 2) {
+          matches++;
         }
       }
+      if (matches !== markers.length) {
+        invalidPoints.push(markers[count])
+      }
     }
-    return true;
+    var newMarkers = [...markers]
+    for (var count = 0; count < invalidPoints.length; count++) {
+      newMarkers = markers.filter((marker) => marker.lat !== invalidPoints[count].lat && marker.lng !== invalidPoints[count].lng);
+      newMarkers.push({
+        valid: false,
+        address: invalidPoints[count].address,
+        lat: invalidPoints[count].lat,
+        lng: invalidPoints[count].lng
+      })
+    }
+    if (invalidPoints.length > 0) {
+      console.log(invalidPoints);
+      console.log(newMarkers);
+      setMarkers([...newMarkers]);
+      return false; 
+    } else {
+      var validMarkers = [];
+      for (var count = 0; count < markers.length; count++) {
+        validMarkers.push({
+          valid: true,
+          address: markers[count].address,
+          lat: markers[count].lat,
+          lng: markers[count].lng
+        })
+        setMarkers([...validMarkers]);
+      }
+      return true;
+    }
+  }
+
+  const removeMarker = () => {
+    var removeArr = markers.filter((marker) => marker.lat !== selected.lat && marker.lng !== selected.lng);
+    // console.log(removeArr);
+    setMarkers([...removeArr]);
+    setSelected(null);
+  }
+
+  const removeAllMarkers = () => {
+    setMarkers([]);
+    setSelected(null);
+    setParks([]);
+    setSearchMarker(null);
   }
 
   const findParks = () => {
@@ -132,6 +199,7 @@ function App() {
     }
 
     console.log(parks)
+
     // ======================================================
 
     // for (var count = 0; count < markers.length; count++) {
@@ -149,7 +217,7 @@ function App() {
     // }
 
     // =======================================================
-    
+
     if (markers.length > 1) {
       const upArr = [];
       const downArr = [];
@@ -192,7 +260,7 @@ function App() {
       fetch('https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=' + markers[0].lat + ',' + markers[0].lng + '&radius=' + radius +'&type=park&key=' + process.env.REACT_APP_GOOGLE_KEY)
         .then(response => response.json())
         .then(data => {
-          // console.log(data)
+          console.log(data)
           setParks([...checkInBounds(data.results)])
           if (data.next_page_token) {
             setTimeout(setNextToken, 2000, data.next_page_token)
@@ -204,82 +272,53 @@ function App() {
 
   return (
     <div style={{display : 'flex'}}>
-      <div style={{flex : '3'}}>
-        <GoogleMap
-          mapContainerStyle={mapContainerStyle}
-          zoom={10}
-          center={center}
-          onClick={(e) => onMapClick(e)}
-          onLoad={onMapLoad}
-          options={{
-            disableDoubleClickZoom: 'true',
-            clickableIcons : false
-          }}
-        >
-          {currMarker ? (<Marker
-            position={{lat: currMarker.lat, lng: currMarker.lng}}
-            opacity={0.5}
-            onClick={confirmMarker}
-          />) : null}
-          {markers.map((marker, index) => 
-            <Marker
-              position={{lat: marker.lat, lng: marker.lng}}            
-              key={index}
-              onClick={() => setSelected(marker)}
-              zIndex={999}
-            />
-          )}
-          {searchMarker ?
-            <Marker
-              position={{lat: searchMarker.lat, lng: searchMarker.lng}}            
-              icon={'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'}
-            /> 
-            : null
-          }
-          {parks.map((park, index) => 
-            <Marker
-              position={{lat: park.geometry.location.lat, lng: park.geometry.location.lng}}            
-              key={index}
-              // label={'P'}
-              icon={'http://maps.google.com/mapfiles/ms/icons/green-dot.png'}
-            />
-          )}
-          {selected ? (<InfoWindow
-            position={{lat: selected.lat, lng: selected.lng}}
-            onCloseClick={() => setSelected(null)}
-            zIndex={1}
-            options={{
-              pixelOffset: new window.google.maps.Size(0,-43),
-            }}
-          >
-            <p>{selected.lat}, {selected.lng}</p>
-          </InfoWindow>) : null
-          }
-          {markers.map((marker, index) =>
-            <Circle
-              key={index}
-              options={{
-                center: {lat: marker.lat, lng: marker.lng},
-                radius: range,
-                clickable: false
-              }}
-            />
-          )}
-
-        </GoogleMap>
-      </div>
       <div style={{display: 'flex', flexDirection: 'column', flex: '1', alignItems: 'center', padding: '10px', maxHeight: '95vh'}}>
         <Autocomplete panMap={panMap}/>
-        <div>
+        <div style={{overflow: 'auto', width: '95%', height: '40vh'}}>
           {markers.map((marker, index) => 
-            marker.address ? <h5 key={index} style={{padding: 'none'}}>{marker.address}</h5> : <h5>{marker.lat},{marker.lng}</h5>
+            marker.address ? 
+              <h5
+                key={index}
+                onClick={() => {
+                  mapRef.current.panTo({lat: marker.lat, lng: marker.lng});
+                  setSelected(marker);
+                  setSelectedPark(null);
+                }}
+                style={{cursor: 'pointer'}}
+              >
+                {marker.address}
+              </h5>
+              :
+              <h5
+                key={index}
+                onClick={() => {
+                  mapRef.current.panTo({lat: marker.lat, lng: marker.lng});
+                  setSelected(marker);
+                  setSelectedPark(null);
+                }}
+                style={{cursor: 'pointer'}}
+              >
+                {marker.lat},{marker.lng}
+              </h5>
           )}
         </div>
-        <button
-          onClick={findParks}
-        >
-          Find Parks
-        </button>
+        <div>
+          <button
+            onClick={findParks}
+          >
+            Find Parks
+          </button>
+          <button
+            onClick={removeAllMarkers}
+          >
+            Clear All
+          </button>
+          <button
+            onClick={locateUser}
+          >
+            Locate me
+          </button>
+        </div>
         <div>
           Range(m)
           <input
@@ -294,11 +333,143 @@ function App() {
           />
         </div>
         
-        <div style={{overflow: 'auto'}}>
+        <div style={{overflow: 'auto', width: '95%'}}>
           {!valid ? <p style={{color: 'red'}}>Given points not in range of each other</p> : null}
           <p>Parks found: {parks.length}</p>
-          {parks.map((park, index) => <h5 key={index} style={{margin:'0'}}>{park.name}</h5>)}
+          {parks.map((park, index) => 
+            <h5
+              key={index}
+              style={{margin:'0', cursor: 'pointer'}}
+              onClick={() => {
+                setSelectedPark(park);
+                setSelected(null);
+                // mapRef.current.panTo({lat: park.geometry.location.lat, lng: park.geometry.location.lng});
+              }}
+            >
+              {park.name}
+            </h5>
+          )}
         </div>
+      </div>
+      <div style={{flex : '3'}}>
+        <GoogleMap
+          mapContainerStyle={mapContainerStyle}
+          zoom={10}
+          center={center}
+          onClick={(e) => onMapClick(e)}
+          onLoad={onMapLoad}
+          options={{
+            disableDoubleClickZoom: 'true',
+            clickableIcons : false,
+            styles: mapStyles,
+          }}
+        >
+          {currMarker ? (<Marker
+            position={{lat: currMarker.lat, lng: currMarker.lng}}
+            opacity={0.5}
+            onClick={confirmMarker}
+          />) : null}
+          {markers.map((marker, index) => 
+            <Marker
+              position={{lat: marker.lat, lng: marker.lng}}            
+              key={index}
+              onClick={() => {
+                setSelected(marker);
+                setSelectedPark(null);
+              }}
+              animation={2}
+            />
+          )}
+          {searchMarker ?
+            <Marker
+              position={{lat: searchMarker.lat, lng: searchMarker.lng}}            
+              icon={'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'}
+            /> 
+            : null
+          }
+          {parks.map((park, index) => 
+            <Marker
+              position={{lat: park.geometry.location.lat, lng: park.geometry.location.lng}}            
+              key={index}
+              animation={2}
+              icon={'http://maps.google.com/mapfiles/ms/icons/green-dot.png'}
+              onClick={() => {
+                setSelectedPark(park);
+                setSelected(null);
+              }}
+            />
+          )}
+          {selectedPark ?
+            <InfoWindow
+              position={{lat: selectedPark.geometry.location.lat, lng: selectedPark.geometry.location.lng}}
+              onCloseClick={() => {
+                setSelectedPark(null);
+              }}
+              options={{
+                pixelOffset: new window.google.maps.Size(0,-31),
+              }}
+            >
+              <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                <h3 style={{margin: '0'}}>{selectedPark.name}</h3>
+                <p>{selectedPark.vicinity}</p>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${selectedPark.geometry.location.lat},${selectedPark.geometry.location.lng}&query_place_id=${selectedPark.place_id}`}
+                  style={{textDecoration: 'none', margin: '0'}}
+                  target="_blank"
+                >
+                  Open in Google Maps
+                </a>
+              </div>
+            </InfoWindow>
+            :
+            null
+          }
+
+          {selected ? (<InfoWindow
+            position={{lat: selected.lat, lng: selected.lng}}
+            onCloseClick={() => setSelected(null)}
+            options={{
+              pixelOffset: new window.google.maps.Size(0,-43),
+            }}
+          >
+            <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+              <h3 style={{margin: '5px'}}>{selected.address ? selected.address : null}</h3>
+              <p style={{margin: '5px'}}>{selected.lat}, {selected.lng}</p>
+              <div>
+                <button
+                  onClick={removeMarker}
+                >
+                  Delete Point
+                </button>
+              </div>
+            </div>
+          </InfoWindow>) : null
+          }
+          {markers.map((marker, index) =>
+            marker.valid === true ?
+            <Circle
+              key={index}
+              options={{
+                center: {lat: marker.lat, lng: marker.lng},
+                radius: range,
+                clickable: false,
+                fillOpacity: '0.15'
+              }}
+            />
+            :
+            <Circle
+              key={index}
+              options={{
+                center: {lat: marker.lat, lng: marker.lng},
+                radius: range,
+                clickable: false,
+                fillOpacity: '0.15',
+                // fillColor: '#ff0000',
+                // strokeColor: '#ff0000'
+              }}
+            />
+          )}
+        </GoogleMap>
       </div>
     </div>
   

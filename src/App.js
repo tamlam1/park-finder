@@ -7,6 +7,8 @@ import { computeDistanceBetween, computeOffset, interpolate } from 'spherical-ge
 
 import mapStyles from './mapStyles';
 
+import locateMeIcon from './locate-me-icon.png'
+
 function App() {
 
   const mapContainerStyle = {
@@ -36,22 +38,30 @@ function App() {
   const [valid, setValid] = React.useState(true);
   const [range, setRange] = React.useState(10000);
   const [selectedPark, setSelectedPark] = React.useState(null);
+  const [markerType, setMarkerType] = React.useState('red');
+  const [blueMarkers, setBlueMarkers] = React.useState([]);
+  const [currBlueMarker, setCurrBlueMarker] = React.useState(null);
+  const [selectedBlue, setSelectedBlue] = React.useState(null);
 
-  const onMapClick = React.useCallback((e) => {
-    setCurrMarker({
-      valid: true,
-      address: null,
-      lat: e.latLng.lat(),
-      lng: e.latLng.lng()
-    });
-    // console.log({
-    //   address: null,
-    //   lat: e.latLng.lat(),
-    //   lng: e.latLng.lng()
-    // })
+  const onMapClick = (e) => {
+    console.log(markerType);
+    if (markerType === 'red') {
+      setCurrMarker({
+        valid: true,
+        address: null,
+        lat: e.latLng.lat(),
+        lng: e.latLng.lng()
+      });
+    } else {
+      setCurrBlueMarker({
+        lat: e.latLng.lat(),
+        lng: e.latLng.lng()
+      });
+    }
     setSelected(null);
     setSelectedPark(null);
-  }, []);
+    setSelectedBlue(null);
+  };
 
   const mapRef = React.useRef();
   const onMapLoad = React.useCallback((map) => {
@@ -114,6 +124,11 @@ function App() {
   const confirmMarker = () => {
     setMarkers([...markers, currMarker])
     setCurrMarker(null);
+  }
+
+  const confirmBlueMarker = () => {
+    setBlueMarkers([...blueMarkers, currBlueMarker])
+    setCurrBlueMarker(null);
   }
 
   const locateUser = () => {
@@ -179,6 +194,13 @@ function App() {
     setSelected(null);
   }
 
+  const removeBlue = () => {
+    var removeArr = blueMarkers.filter((marker) => marker.lat !== selectedBlue.lat && marker.lng !== selectedBlue.lng);
+    // console.log(removeArr);
+    setBlueMarkers([...removeArr]);
+    setSelectedBlue(null);
+  }
+
   const removeAllMarkers = () => {
     setMarkers([]);
     setSelected(null);
@@ -218,6 +240,20 @@ function App() {
 
     // =======================================================
 
+    const initialSearch = (marker) => {
+      fetch('https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=' + marker.lat + ',' + marker.lng + '&radius=' + radius +'&type=park&key=' + process.env.REACT_APP_GOOGLE_KEY)
+        .then(response => response.json())
+        .then(data => {
+          // console.log(data)
+          // console.log(parks)
+          setParks([...checkInBounds(data.results)])
+          if (data.next_page_token) {
+            setTimeout(setNextToken, 2000, data.next_page_token)
+          }
+        })
+        .catch(error => console.log(error));
+    }
+
     if (markers.length > 1) {
       const upArr = [];
       const downArr = [];
@@ -245,17 +281,12 @@ function App() {
       // setMarkers([...markers, intersectionMarker])
       setSearchMarker(intersectionMarker)
       
-      fetch('https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=' + intersectionMarker.lat + ',' + intersectionMarker.lng + '&radius=' + radius +'&type=park&key=' + process.env.REACT_APP_GOOGLE_KEY)
-      .then(response => response.json())
-      .then(data => {
-        // console.log(data)
-        // console.log(parks)
-        setParks([...checkInBounds(data.results)])
-        if (data.next_page_token) {
-          setTimeout(setNextToken, 2000, data.next_page_token)
-        }
-      })
-      .catch(error => console.log(error));
+      // const searchArr = [...blueMarkers, intersectionMarker];
+      // for (var count = 0; count < searchArr.length; count++) {
+      setTimeout(initialSearch, 2000, intersectionMarker);
+      // setTimeout(initialSearch, 2000 + 8000, blueMarkers[0]);
+
+      // }
     } else if (markers.length === 1) {
       fetch('https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=' + markers[0].lat + ',' + markers[0].lng + '&radius=' + radius +'&type=park&key=' + process.env.REACT_APP_GOOGLE_KEY)
         .then(response => response.json())
@@ -272,8 +303,8 @@ function App() {
 
   return (
     <div style={{display : 'flex'}}>
-      <div style={{display: 'flex', flexDirection: 'column', flex: '1', alignItems: 'center', padding: '10px', maxHeight: '95vh'}}>
-        <Autocomplete panMap={panMap}/>
+      <div style={{display: 'flex', flexDirection: 'column', flex: '1', alignItems: 'center', padding: '10px', maxHeight: '95vh', maxWidth: '300px'}}>
+        
         <div style={{overflow: 'auto', width: '95%', height: '40vh'}}>
           {markers.map((marker, index) => 
             marker.address ? 
@@ -298,7 +329,7 @@ function App() {
                 }}
                 style={{cursor: 'pointer'}}
               >
-                {marker.lat},{marker.lng}
+                Point {index + 1}
               </h5>
           )}
         </div>
@@ -313,11 +344,19 @@ function App() {
           >
             Clear All
           </button>
-          <button
-            onClick={locateUser}
+
+            <img onClick={locateUser} style={{width: '40px', cursor: 'pointer', position: 'absolute', right: '10px', zIndex: '999', bottom: '200px', borderRadius: '2px'}} src={locateMeIcon}/>
+   
+          {/* <button
+            onClick={() => setMarkerType('red')}
           >
-            Locate me
-          </button>
+            Red Marker
+          </button> */}
+          {/* <button
+            onClick={() => setMarkerType('blue')}
+          >
+            Blue Marker
+          </button> */}
         </div>
         <div>
           Range(m)
@@ -352,6 +391,9 @@ function App() {
         </div>
       </div>
       <div style={{flex : '3'}}>
+        <div style={{position: 'absolute', zIndex: '998', top: '10px', left: '50%', width: '30%', maxWidth: '400px'}}>
+          <Autocomplete panMap={panMap}/>
+        </div>
         <GoogleMap
           mapContainerStyle={mapContainerStyle}
           zoom={10}
@@ -369,6 +411,12 @@ function App() {
             opacity={0.5}
             onClick={confirmMarker}
           />) : null}
+          {currBlueMarker ? (<Marker
+            position={{lat: currBlueMarker.lat, lng: currBlueMarker.lng}}
+            opacity={0.5}
+            onClick={confirmBlueMarker}
+            icon={'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'}
+          />) : null}
           {markers.map((marker, index) => 
             <Marker
               position={{lat: marker.lat, lng: marker.lng}}            
@@ -380,12 +428,38 @@ function App() {
               animation={2}
             />
           )}
-          {searchMarker ?
+          {/* {searchMarker ?
             <Marker
               position={{lat: searchMarker.lat, lng: searchMarker.lng}}            
-              icon={'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'}
+              icon={'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png'}
             /> 
             : null
+          } */}
+          {blueMarkers.map((marker) => 
+            <Marker
+              position={{lat: marker.lat, lng: marker.lng}}            
+              icon={'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'}
+              animation={2}
+              onClick={() => setSelectedBlue (marker)}
+            />
+          )}
+          {selectedBlue ?
+            <InfoWindow
+              position={{lat: selectedBlue.lat, lng: selectedBlue.lng}}
+              options={{
+                pixelOffset: new window.google.maps.Size(0,-31),
+              }}
+            >
+              <div>
+                <button
+                  onClick={removeBlue}
+                >
+                  Delete
+                </button>
+              </div>
+            </InfoWindow>
+            :
+            null
           }
           {parks.map((park, index) => 
             <Marker

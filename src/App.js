@@ -33,7 +33,6 @@ function App() {
   const [selected, setSelected] = React.useState(null);
   const [currMarker, setCurrMarker] = React.useState(null);
   const [parks, setParks] = React.useState([]);
-  const [nextToken, setNextToken] = React.useState(null);
   const [searchMarker, setSearchMarker] = React.useState(null);
   const [valid, setValid] = React.useState(true);
   const [range, setRange] = React.useState(10000);
@@ -61,6 +60,11 @@ function App() {
     setSelected(null);
     setSelectedPark(null);
     setSelectedBlue(null);
+    if (markerType === 'red') {
+      setCurrBlueMarker(null);
+    } else {
+      setCurrMarker(null);
+    }
   };
 
   const mapRef = React.useRef();
@@ -87,27 +91,6 @@ function App() {
     return validParks
   }
 
-  React.useEffect(() => {
-    if (initialRender.current) {
-      initialRender.current = false;
-      return;
-    }
-
-    if (parks.length === 0) {
-      return;
-    }
-
-    fetch('https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?pagetoken=' + nextToken + '&key=' + process.env.REACT_APP_GOOGLE_KEY)
-      .then(response => response.json())
-      .then(data => {
-        // console.log(data);
-        setParks([...parks, ...checkInBounds(data.results)])
-        if (data.next_page_token) {
-          setTimeout(setNextToken, 2000, data.next_page_token)
-        }
-      })
-      .catch(error => console.log(error));
-  }, [nextToken])
 
   if (loadError) return "Error loading google maps"
   if (!isLoaded) return "Loading google maps..."
@@ -206,6 +189,8 @@ function App() {
     setSelected(null);
     setParks([]);
     setSearchMarker(null);
+    setBlueMarkers([]);
+    setSelectedBlue(null);
   }
 
   const findParks = () => {
@@ -218,40 +203,6 @@ function App() {
       return;
     } else {
       setValid(true);
-    }
-
-    console.log(parks)
-
-    // ======================================================
-
-    // for (var count = 0; count < markers.length; count++) {
-    //   // console.log(markers[count]);
-    //   fetch('https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=' + markers[count].lat + ',' + markers[count].lng + '&radius=' + radius +'&type=park&key=' + process.env.REACT_APP_GOOGLE_KEY)
-    //   .then(response => response.json())
-    //   .then(data => {
-    //     console.log(data)
-    //     setParks([...parks, ...data.results])
-    //     if (data.next_page_token) {
-    //       setTimeout(setNextToken, 2000, data.next_page_token)
-    //     }
-    //   })
-    //   .catch(error => console.log(error));
-    // }
-
-    // =======================================================
-
-    const initialSearch = (marker) => {
-      fetch('https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=' + marker.lat + ',' + marker.lng + '&radius=' + radius +'&type=park&key=' + process.env.REACT_APP_GOOGLE_KEY)
-        .then(response => response.json())
-        .then(data => {
-          // console.log(data)
-          // console.log(parks)
-          setParks([...checkInBounds(data.results)])
-          if (data.next_page_token) {
-            setTimeout(setNextToken, 2000, data.next_page_token)
-          }
-        })
-        .catch(error => console.log(error));
     }
 
     if (markers.length > 1) {
@@ -280,24 +231,39 @@ function App() {
       const intersectionMarker = {address: null, lat: intersectionCenter.latitude, lng: intersectionCenter.longitude}
       // setMarkers([...markers, intersectionMarker])
       setSearchMarker(intersectionMarker)
-      
-      // const searchArr = [...blueMarkers, intersectionMarker];
-      // for (var count = 0; count < searchArr.length; count++) {
-      setTimeout(initialSearch, 2000, intersectionMarker);
-      // setTimeout(initialSearch, 2000 + 8000, blueMarkers[0]);
 
-      // }
+      console.log('fetching now...')
+      const searchArr = [intersectionMarker, ...blueMarkers]
+      fetch('/find_parks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({'markers': searchArr, 'radius': range, 'key': process.env.REACT_APP_GOOGLE_KEY})
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        setParks(checkInBounds([...data.parks]));
+      })  
+
     } else if (markers.length === 1) {
-      fetch('https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=' + markers[0].lat + ',' + markers[0].lng + '&radius=' + radius +'&type=park&key=' + process.env.REACT_APP_GOOGLE_KEY)
-        .then(response => response.json())
-        .then(data => {
-          console.log(data)
-          setParks([...checkInBounds(data.results)])
-          if (data.next_page_token) {
-            setTimeout(setNextToken, 2000, data.next_page_token)
-          }
-        })
-        .catch(error => console.log(error));
+
+      console.log('fetching now...')
+      const searchArr = [...markers, ...blueMarkers]
+      fetch('/find_parks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({'markers': searchArr, 'radius': range, 'key': process.env.REACT_APP_GOOGLE_KEY})
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        setParks(checkInBounds([...data.parks]));
+      })
+
     }    
   }
 
@@ -347,16 +313,16 @@ function App() {
 
             <img onClick={locateUser} style={{width: '40px', cursor: 'pointer', position: 'absolute', right: '10px', zIndex: '999', bottom: '200px', borderRadius: '2px'}} src={locateMeIcon}/>
    
-          {/* <button
-            onClick={() => setMarkerType('red')}
+          <button
+            onClick={() => {setMarkerType('red'); setCurrBlueMarker(null);}}
           >
             Red Marker
-          </button> */}
-          {/* <button
-            onClick={() => setMarkerType('blue')}
+          </button>
+          <button
+            onClick={() => {setMarkerType('blue'); setCurrMarker(null);}}
           >
             Blue Marker
-          </button> */}
+          </button>
         </div>
         <div>
           Range(m)
@@ -428,13 +394,13 @@ function App() {
               animation={2}
             />
           )}
-          {/* {searchMarker ?
+          {searchMarker ?
             <Marker
               position={{lat: searchMarker.lat, lng: searchMarker.lng}}            
               icon={'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png'}
             /> 
             : null
-          } */}
+          }
           {blueMarkers.map((marker) => 
             <Marker
               position={{lat: marker.lat, lng: marker.lng}}            
@@ -520,7 +486,6 @@ function App() {
           </InfoWindow>) : null
           }
           {markers.map((marker, index) =>
-            marker.valid === true ?
             <Circle
               key={index}
               options={{
@@ -530,18 +495,7 @@ function App() {
                 fillOpacity: '0.15'
               }}
             />
-            :
-            <Circle
-              key={index}
-              options={{
-                center: {lat: marker.lat, lng: marker.lng},
-                radius: range,
-                clickable: false,
-                fillOpacity: '0.15',
-                // fillColor: '#ff0000',
-                // strokeColor: '#ff0000'
-              }}
-            />
+           
           )}
         </GoogleMap>
       </div>

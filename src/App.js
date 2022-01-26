@@ -378,36 +378,38 @@ function App() {
             onChange={handleMarkerType}
             exlusive={true}
           >
-            <Tooltip
-              title="Use this to add user locations"
-              componentsProps={{
-                tooltip: {
-                  sx: {
-                    fontSize: "0.9em"
+            <ToggleButton value="red">
+              <Tooltip
+                title="Use this to add user locations"
+                componentsProps={{
+                  tooltip: {
+                    sx: {
+                      fontSize: "0.9em"
+                    }
                   }
-                }
-              }}
-              arrow
-            >
-              <ToggleButton value="red">
-                Marker
-              </ToggleButton>
-            </Tooltip>
-            <Tooltip 
-              title="If not satisfied with search results, use this to add points at locations where the search may have missed and re-run the search"
-              componentsProps={{
-                tooltip: {
-                  sx: {
-                    fontSize: "0.9em"
+                }}
+                arrow
+              >
+                
+                <span>Marker</span>
+              </Tooltip>
+            </ToggleButton>
+            <ToggleButton value="blue">
+              <Tooltip 
+                title="If not satisfied with search results, use this to add points at locations where the search may have missed and re-run the search"
+                componentsProps={{
+                  tooltip: {
+                    sx: {
+                      fontSize: "0.9em"
+                    }
                   }
-                }
-              }}
-              arrow
-            >
-              <ToggleButton value="blue">
-                Extra Search Point
-              </ToggleButton>
-            </Tooltip>
+                }}
+                arrow
+              >
+              
+                <span>Extra Search Point</span>
+              </Tooltip>
+            </ToggleButton>
           </ToggleButtonGroup>
         </div>
         <div>

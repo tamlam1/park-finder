@@ -53,6 +53,9 @@ function App() {
   const [currBlueMarker, setCurrBlueMarker] = React.useState(null);
   const [selectedBlue, setSelectedBlue] = React.useState(null);
   const [open, setOpen] = React.useState(false);
+  const [loading, setLoading] = React.useState(false)
+
+
   const handleClose = () => {
     setOpen(false);
   };
@@ -248,7 +251,10 @@ function App() {
 
     if (markers.length !== 0) {
       handleToggle();
+      setLoading(true);
     }
+
+    
 
     if (markers.length > 1) {
       const upArr = [];
@@ -291,6 +297,7 @@ function App() {
         console.log(data);
         setParks(checkInBounds([...data.parks]));
         handleClose();
+        setLoading(false);
       })  
 
     } else if (markers.length === 1) {
@@ -309,9 +316,11 @@ function App() {
         console.log(data);
         setParks(checkInBounds([...data.parks]));
         handleClose();
+        setLoading(false);
       })
 
     }
+    
   }
 
   return (
@@ -448,13 +457,18 @@ function App() {
         <div style={{position: 'absolute', zIndex: '998', top: '10px', left: '50%', width: '30%', maxWidth: '400px'}}>
           <Autocomplete panMap={panMap}/>
         </div>
-        <Backdrop
+        {/* <Backdrop
         
           sx={{ position: 'absolute', color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
           open={open}
         >
-          <CircularProgress color="inherit" />
-        </Backdrop>
+        </Backdrop> */}
+        {/* <CircularProgress style={{position: 'absolute', top: '50%', left: '50%', zIndex: '50'}} color="inherit" /> */}
+        {loading ?
+          <CircularProgress size={100} style={{position: 'absolute', top: '50%', left: '50%', zIndex: '50', translate: '-50%', color: '#404040'}}/>
+          :
+          null
+        }
         <GoogleMap
           mapContainerStyle={mapContainerStyle}
           zoom={10}

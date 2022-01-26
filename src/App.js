@@ -9,6 +9,17 @@ import mapStyles from './mapStyles';
 
 import locateMeIcon from './locate-me-icon.png'
 
+// toggle buttons
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+
+// loading animation
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
+import Button from '@mui/material/Button';
+
+import Tooltip from '@mui/material/Tooltip';
+
 function App() {
 
   const mapContainerStyle = {
@@ -41,9 +52,16 @@ function App() {
   const [blueMarkers, setBlueMarkers] = React.useState([]);
   const [currBlueMarker, setCurrBlueMarker] = React.useState(null);
   const [selectedBlue, setSelectedBlue] = React.useState(null);
+  const [open, setOpen] = React.useState(false);
+  const handleClose = () => {
+    setOpen(false);
+  };
+  const handleToggle = () => {
+    setOpen(!open);
+  };
 
   const onMapClick = (e) => {
-    console.log(markerType);
+    // console.log(markerType);
     if (markerType === 'red') {
       setCurrMarker({
         valid: true,
@@ -87,8 +105,25 @@ function App() {
       if (valid === true) validParks.push(parks[count]);
       valid = false;
     }
-    console.log(validParks)
+    // console.log(validParks)
     return validParks
+  }
+
+  const checkInBoundsBlue = ( blueMarkerArr ) => {
+    var validMarker = [];
+    for (var count = 0; count < blueMarkerArr.length; count++) {
+      var valid = true;
+      for (var count1 = 0; count1 < markers.length; count1++) {
+        // console.log(computeDistanceBetween({lat: parks[count].geometry.location.lat, lng: parks[count].geometry.location.lng}, {lat: markers[count1].lat, lng: markers[count1].lng}));
+        if (computeDistanceBetween({lat: blueMarkerArr[count].lat, lng: blueMarkerArr[count].lng}, {lat: markers[count1].lat, lng: markers[count1].lng}) > range) {
+          valid = false;
+        }
+      }
+      if (valid === true) validMarker.push(blueMarkerArr[count]);
+      valid = false;
+    }
+    // console.log(validMarker)
+    return validMarker
   }
 
 
@@ -126,6 +161,12 @@ function App() {
       () => null,
     )
   }
+
+  const handleMarkerType = (event, newMarkerType) => {
+    if (newMarkerType !== null) {
+      setMarkerType(newMarkerType);
+    }
+  };
 
   const checkOverlap = () => {
     var invalidPoints = []
@@ -205,6 +246,10 @@ function App() {
       setValid(true);
     }
 
+    if (markers.length !== 0) {
+      handleToggle();
+    }
+
     if (markers.length > 1) {
       const upArr = [];
       const downArr = [];
@@ -233,7 +278,7 @@ function App() {
       setSearchMarker(intersectionMarker)
 
       console.log('fetching now...')
-      const searchArr = [intersectionMarker, ...blueMarkers]
+      const searchArr = [intersectionMarker, ...checkInBoundsBlue(blueMarkers)]
       fetch('/find_parks', {
         method: 'POST',
         headers: {
@@ -245,12 +290,13 @@ function App() {
       .then(data => {
         console.log(data);
         setParks(checkInBounds([...data.parks]));
+        handleClose();
       })  
 
     } else if (markers.length === 1) {
 
       console.log('fetching now...')
-      const searchArr = [...markers, ...blueMarkers]
+      const searchArr = [...markers, ...checkInBoundsBlue(blueMarkers)]
       fetch('/find_parks', {
         method: 'POST',
         headers: {
@@ -262,9 +308,10 @@ function App() {
       .then(data => {
         console.log(data);
         setParks(checkInBounds([...data.parks]));
+        handleClose();
       })
 
-    }    
+    }
   }
 
   return (
@@ -300,20 +347,22 @@ function App() {
           )}
         </div>
         <div>
-          <button
+          <Button
             onClick={findParks}
+            variant="contained"
           >
             Find Parks
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={removeAllMarkers}
+            variant="outlined"
           >
             Clear All
-          </button>
+          </Button>
 
             <img onClick={locateUser} style={{width: '40px', cursor: 'pointer', position: 'absolute', right: '10px', zIndex: '999', bottom: '200px', borderRadius: '2px'}} src={locateMeIcon}/>
    
-          <button
+          {/* <button
             onClick={() => {setMarkerType('red'); setCurrBlueMarker(null);}}
           >
             Red Marker
@@ -322,7 +371,44 @@ function App() {
             onClick={() => {setMarkerType('blue'); setCurrMarker(null);}}
           >
             Blue Marker
-          </button>
+          </button> */}
+          <ToggleButtonGroup
+            value={markerType}
+            exclusive
+            onChange={handleMarkerType}
+            exlusive={true}
+          >
+            <Tooltip
+              title="Use this to add user locations"
+              componentsProps={{
+                tooltip: {
+                  sx: {
+                    fontSize: "0.9em"
+                  }
+                }
+              }}
+              arrow
+            >
+              <ToggleButton value="red">
+                Marker
+              </ToggleButton>
+            </Tooltip>
+            <Tooltip 
+              title="If not satisfied with search results, use this to add points at locations where the search may have missed and re-run the search"
+              componentsProps={{
+                tooltip: {
+                  sx: {
+                    fontSize: "0.9em"
+                  }
+                }
+              }}
+              arrow
+            >
+              <ToggleButton value="blue">
+                Extra Search Point
+              </ToggleButton>
+            </Tooltip>
+          </ToggleButtonGroup>
         </div>
         <div>
           Range(m)
@@ -356,10 +442,17 @@ function App() {
           )}
         </div>
       </div>
-      <div style={{flex : '3'}}>
+      <div style={{flex : '3', position: 'relative'}}>
         <div style={{position: 'absolute', zIndex: '998', top: '10px', left: '50%', width: '30%', maxWidth: '400px'}}>
           <Autocomplete panMap={panMap}/>
         </div>
+        <Backdrop
+        
+          sx={{ position: 'absolute', color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+          open={open}
+        >
+          <CircularProgress color="inherit" />
+        </Backdrop>
         <GoogleMap
           mapContainerStyle={mapContainerStyle}
           zoom={10}

@@ -32,7 +32,7 @@ function App() {
     lat: -33.868820,
     lng: 151.209290
   });
-  
+
   const libraries = ['places', 'geometry']
 
   const { isLoaded, loadError } = useLoadScript({
@@ -95,6 +95,17 @@ function App() {
 
   const initialRender = React.useRef(true);
 
+  React.useEffect(() => {
+    if (localStorage.getItem('markers')) {
+      const savedMarkers = JSON.parse(localStorage.getItem('markers'));
+      setMarkers([...savedMarkers]);
+    }
+    if (localStorage.getItem('blueMarkers')) {
+      const savedMarkers = JSON.parse(localStorage.getItem('blueMarkers'))
+      setBlueMarkers([...savedMarkers]);
+    }
+  }, [])
+
   const checkInBounds = ( parks ) => {
     var validParks = [];
     for (var count = 0; count < parks.length; count++) {
@@ -143,12 +154,14 @@ function App() {
   }
 
   const confirmMarker = () => {
-    setMarkers([...markers, currMarker])
+    setMarkers([...markers, currMarker]);
+    localStorage.setItem('markers', JSON.stringify([...markers, currMarker]));
     setCurrMarker(null);
   }
 
   const confirmBlueMarker = () => {
-    setBlueMarkers([...blueMarkers, currBlueMarker])
+    setBlueMarkers([...blueMarkers, currBlueMarker]);
+    localStorage.setItem('blueMarkers', JSON.stringify([...blueMarkers, currBlueMarker]));
     setCurrBlueMarker(null);
   }
 
@@ -219,6 +232,7 @@ function App() {
     // console.log(removeArr);
     setMarkers([...removeArr]);
     setSelected(null);
+    localStorage.setItem('markers', JSON.stringify([...removeArr]));
   }
 
   const removeBlue = () => {
@@ -226,6 +240,7 @@ function App() {
     // console.log(removeArr);
     setBlueMarkers([...removeArr]);
     setSelectedBlue(null);
+    localStorage.setItem('blueMarkers', JSON.stringify([...removeArr]));
   }
 
   const removeAllMarkers = () => {
@@ -235,6 +250,7 @@ function App() {
     setSearchMarker(null);
     setBlueMarkers([]);
     setSelectedBlue(null);
+    localStorage.clear();
   }
 
   const findParks = () => {

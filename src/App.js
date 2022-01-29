@@ -20,7 +20,29 @@ import Button from '@mui/material/Button';
 
 import Tooltip from '@mui/material/Tooltip';
 
+import DeleteIcon from '@mui/icons-material/Delete';
+
+import { styled } from "@mui/material/styles";
+import MuiToggleButton from '@mui/material/ToggleButton';
+
+import PinDropIcon from '@mui/icons-material/PinDrop';
+
+import SearchIcon from '@mui/icons-material/Search';
+
+import TextField from '@mui/material/TextField';
+
 function App() {
+  // https://stackoverflow.com/questions/69707814/set-selected-background-color-of-mui-togglebutton
+  const ToggleButton = styled(MuiToggleButton)({
+    "&:hover, &": {
+      backgroundColor: 'white',
+      
+    },
+    "&.Mui-selected, &.Mui-selected:hover" : {
+
+      backgroundColor: '#cccccc'
+    }
+  });
 
   const mapContainerStyle = {
     width: '100%',
@@ -250,6 +272,7 @@ function App() {
     setSearchMarker(null);
     setBlueMarkers([]);
     setSelectedBlue(null);
+    setSelectedPark(null);
     localStorage.clear();
   }
 
@@ -257,6 +280,10 @@ function App() {
     // console.log(markers.length)
     const home = '-33.9488651,151.0494066'
     const radius = '5000'
+
+    if (loading) {
+      return;
+    }
 
     if (!checkOverlap()) {
       setValid(false);
@@ -342,7 +369,43 @@ function App() {
   return (
     <div style={{display : 'flex'}}>
       <div style={{display: 'flex', flexDirection: 'column', flex: '1', alignItems: 'center', padding: '10px', maxHeight: '95vh', maxWidth: '300px'}}>
-        
+        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+          <h1 style={{margin: '0'}}>Park Finder</h1>
+          <h5 style={{margin: '0'}}>Created by Tam Lam</h5>
+        </div>
+        <div style={{display: 'flex', marginTop: '30px'}}>
+          <Button
+            onClick={findParks}
+            variant="contained"
+            style={{margin: '5px'}}
+            startIcon={<SearchIcon />}
+          >
+            Find Parks
+          </Button>
+          <TextField id="outlined-basic" label="Range (m)" variant="outlined" style={{maxWidth: '130px'}}
+            value={range}
+            onChange={(e) => {
+              console.log(e.target.value)
+              const validInput = /^[0-9\b]+$/;
+              if (e.target.value === '' || validInput.test(e.target.value)) {
+                if (Number.isInteger(parseInt(e.target.value))) {
+                  console.log('lololoololol')
+                  setRange(parseInt(e.target.value));
+                }
+              }
+            }}
+          /> 
+        </div>
+        <img onClick={locateUser} style={{width: '40px', cursor: 'pointer', position: 'absolute', right: '10px', zIndex: '999', bottom: '200px', borderRadius: '2px'}} src={locateMeIcon}/>
+        <Button
+          onClick={removeAllMarkers}
+          variant="contained"
+          color={'error'}
+          style={{margin: '5px'}}
+          startIcon={<DeleteIcon />}
+        >
+          Clear All
+        </Button>
         <div style={{overflow: 'auto', width: '95%', height: '40vh'}}>
           {markers.map((marker, index) => 
             marker.address ? 
@@ -371,89 +434,53 @@ function App() {
               </h5>
           )}
         </div>
-        <div>
-          <Button
-            onClick={findParks}
-            variant="contained"
-          >
-            Find Parks
-          </Button>
-          <Button
-            onClick={removeAllMarkers}
-            variant="outlined"
-          >
-            Clear All
-          </Button>
-
-            <img onClick={locateUser} style={{width: '40px', cursor: 'pointer', position: 'absolute', right: '10px', zIndex: '999', bottom: '200px', borderRadius: '2px'}} src={locateMeIcon}/>
-   
-          {/* <button
-            onClick={() => {setMarkerType('red'); setCurrBlueMarker(null);}}
-          >
-            Red Marker
-          </button>
-          <button
-            onClick={() => {setMarkerType('blue'); setCurrMarker(null);}}
-          >
-            Blue Marker
-          </button> */}
-          <ToggleButtonGroup
-            value={markerType}
-            exclusive
-            onChange={handleMarkerType}
-            exlusive={true}
-          >
-            <ToggleButton value="red">
-              <Tooltip
-                title="Use this to add user locations"
-                componentsProps={{
-                  tooltip: {
-                    sx: {
-                      fontSize: "0.9em"
-                    }
+        
+        <ToggleButtonGroup
+          value={markerType}
+          exclusive
+          onChange={handleMarkerType}
+          style={{position: 'absolute', right: '80px', bottom: '28px'}}
+          sx={{zIndex: '100'}}
+        >
+          <ToggleButton value="red">
+            <PinDropIcon color={'error'}/>
+            <Tooltip
+              title="Use this to add user locations"
+              componentsProps={{
+                tooltip: {
+                  sx: {
+                    fontSize: "0.9em"
                   }
-                }}
-                arrow
-              >
-                
-                <span>Marker</span>
-              </Tooltip>
-            </ToggleButton>
-            <ToggleButton value="blue">
-              <Tooltip 
-                title="If not satisfied with search results, use this to add points at locations where the search may have missed and re-run the search"
-                componentsProps={{
-                  tooltip: {
-                    sx: {
-                      fontSize: "0.9em"
-                    }
-                  }
-                }}
-                arrow
-              >
+                }
+              }}
+              arrow
+            >
               
-                <span>Extra Search Point</span>
-              </Tooltip>
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </div>
-        <div>
-          Range(m)
-          <input
-            value={range}
-            onChange={(e) => {
-              console.log(e.target.value)
-              if (Number.isInteger(parseInt(e.target.value))) {
-                console.log('lololoololol')
-                setRange(parseInt(e.target.value));
-              }
-            }}
-          />
-        </div>
+              <span>Marker</span>
+            </Tooltip>
+          </ToggleButton>
+          <ToggleButton value="blue" >
+            <PinDropIcon color={'primary'}/>
+            <Tooltip 
+              title="If not satisfied with search results, use this to add points at locations where the search may have missed and re-run the search"
+              componentsProps={{
+                tooltip: {
+                  sx: {
+                    fontSize: "0.9em"
+                  }
+                }
+              }}
+              arrow
+            >
+            
+              <span>Extra Search Point</span>
+            </Tooltip>
+          </ToggleButton>
+        </ToggleButtonGroup>
         
         <div style={{overflow: 'auto', width: '95%'}}>
           {!valid ? <p style={{color: 'red'}}>Given points not in range of each other</p> : null}
-          <p>Parks found: {parks.length}</p>
+          {parks.length > 0 ? <p>Parks found: {parks.length}</p> : null}  
           {parks.map((park, index) => 
             <h5
               key={index}
@@ -470,7 +497,7 @@ function App() {
         </div>
       </div>
       <div style={{flex : '3', position: 'relative'}}>
-        <div style={{position: 'absolute', zIndex: '998', top: '10px', left: '50%', width: '30%', maxWidth: '400px'}}>
+        <div style={{position: 'absolute', top: '10px', left: '50%', zIndex: '50', translate: '-50%', zIndex: '998', width: '30%', maxWidth: '400px'}}>
           <Autocomplete panMap={panMap}/>
         </div>
         {/* <Backdrop
@@ -515,6 +542,7 @@ function App() {
               onClick={() => {
                 setSelected(marker);
                 setSelectedPark(null);
+                setSelectedBlue(null);
               }}
               animation={2}
             />
@@ -526,12 +554,16 @@ function App() {
             /> 
             : null
           }
-          {blueMarkers.map((marker) => 
+          {blueMarkers.map((marker, index) => 
             <Marker
               position={{lat: marker.lat, lng: marker.lng}}            
               icon={'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'}
               animation={2}
-              onClick={() => setSelectedBlue (marker)}
+              key={index}
+              onClick={() => {
+                setSelectedBlue(marker);
+                setSelected(null);
+              }}
             />
           )}
           {selectedBlue ?
@@ -542,11 +574,12 @@ function App() {
               }}
             >
               <div>
-                <button
+                <Button
                   onClick={removeBlue}
+                  startIcon={<DeleteIcon />}
                 >
-                  Delete
-                </button>
+                  Delete Point
+                </Button>
               </div>
             </InfoWindow>
             :
@@ -597,15 +630,17 @@ function App() {
               pixelOffset: new window.google.maps.Size(0,-43),
             }}
           >
-            <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-              <h3 style={{margin: '5px'}}>{selected.address ? selected.address : null}</h3>
-              <p style={{margin: '5px'}}>{selected.lat}, {selected.lng}</p>
+            <div style={{ margin: '3px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0'}}>
+              <h3 style={{margin: '0'}}>{selected.address ? selected.address : null}</h3>
+              {/* <p style={{margin: '5px'}}>{selected.lat}, {selected.lng}</p> */}
               <div>
-                <button
+                <Button
                   onClick={removeMarker}
+                  startIcon={<DeleteIcon />}
+                  color={'error'}
                 >
                   Delete Point
-                </button>
+                </Button>
               </div>
             </div>
           </InfoWindow>) : null

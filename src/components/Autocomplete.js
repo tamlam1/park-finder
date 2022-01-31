@@ -15,6 +15,8 @@ import {
 import { findByLabelText } from '@testing-library/react';
 import "@reach/combobox/styles.css";
 
+console.log = function() {}
+
 const Autocomplete = ({ panMap }) => {
   const {
     ready,

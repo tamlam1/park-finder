@@ -44,7 +44,7 @@ import { BorderTopRounded } from '@mui/icons-material';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 
-console.log = function() {}
+// console.log = function() {}
 
 function App() {
   // https://stackoverflow.com/questions/69707814/set-selected-background-color-of-mui-togglebutton
@@ -360,7 +360,7 @@ function App() {
 
       console.log('fetching now...')
       const searchArr = [intersectionMarker, ...checkInBoundsBlue(blueMarkers)]
-      fetch('/find_parks', {
+      fetch('/api/find_parks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -380,7 +380,7 @@ function App() {
 
       console.log('fetching now...')
       const searchArr = [...markers, ...checkInBoundsBlue(blueMarkers)]
-      fetch('/find_parks', {
+      fetch('/api/find_parks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

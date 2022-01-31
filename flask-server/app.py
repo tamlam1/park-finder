@@ -9,7 +9,7 @@ app = Flask(__name__)
 def hello_world():
     return "<p>Hello, World!</p>"
 
-@app.route("/find_parks", methods=['GET', 'POST'])
+@app.route("/api/find_parks", methods=['GET', 'POST'])
 def find_parks():
     parks = []
     dataDict = request.get_json()

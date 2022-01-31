@@ -77,19 +77,32 @@ const Autocomplete = ({ panMap }) => {
     <div style={{width: '90%'}}>
       <Combobox
         onSelect={(e) => {setAddress(e)}}
+        
       >
         <ComboboxInput 
           value={value}
           onChange={(e) => setValue(e.target.value)}
           disabled={!ready} 
           placeholder={'Search location'}
-          style={{width: '100%'}}
-          />
-        <ComboboxPopover >
+          style={{
+            width: '100%',
+            padding: '0.5rem',
+            fontSize: '1rem',
+          }}
+        />
+        <ComboboxPopover style={{borderRadius: '5px'}}>
           <ComboboxList>
             {status === "OK" &&
               data.map(({ place_id, description }) => (
-                <ComboboxOption key={place_id} value={description} />
+                <ComboboxOption
+                  key={place_id}
+                  value={description}
+                  style={{
+                    padding: '0.5rem',
+                    fontSize: '1rem',
+                    width: '95%'
+                  }}
+                />
               ))}
           </ComboboxList>
         </ComboboxPopover>

@@ -31,18 +31,30 @@ import SearchIcon from '@mui/icons-material/Search';
 
 import TextField from '@mui/material/TextField';
 
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
+import Divider from "@mui/material/Divider";
+
+import Paper from "@mui/material/Paper";
+import Card from "@mui/material/Card";
+import { BorderTopRounded } from '@mui/icons-material';
+
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+
 function App() {
   // https://stackoverflow.com/questions/69707814/set-selected-background-color-of-mui-togglebutton
-  const ToggleButton = styled(MuiToggleButton)({
+  const ToggleButton = styled(MuiToggleButton)(({ selectedColor }) => ({
     "&:hover, &": {
-      backgroundColor: 'white',
-      
+      backgroundColor: "white",
     },
     "&.Mui-selected, &.Mui-selected:hover" : {
 
-      backgroundColor: '#cccccc'
+      backgroundColor: selectedColor
     }
-  });
+  }));
 
   const mapContainerStyle = {
     width: '100%',
@@ -69,6 +81,7 @@ function App() {
   const [searchMarker, setSearchMarker] = React.useState(null);
   const [valid, setValid] = React.useState(true);
   const [range, setRange] = React.useState(10000);
+  const [userRange, setUserRange] = React.useState(10);
   const [selectedPark, setSelectedPark] = React.useState(null);
   const [markerType, setMarkerType] = React.useState('red');
   const [blueMarkers, setBlueMarkers] = React.useState([]);
@@ -76,6 +89,22 @@ function App() {
   const [selectedBlue, setSelectedBlue] = React.useState(null);
   const [open, setOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(false)
+
+  const [openError, setOpenError] = React.useState(false);
+
+  const handleClickError = () => {
+    setOpenError(true);
+  };
+
+  const handleCloseError = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setOpenError(false);
+  };
+
+
 
 
   const handleClose = () => {
@@ -287,6 +316,7 @@ function App() {
 
     if (!checkOverlap()) {
       setValid(false);
+      handleClickError();
       return;
     } else {
       setValid(true);
@@ -341,7 +371,8 @@ function App() {
         setParks(checkInBounds([...data.parks]));
         handleClose();
         setLoading(false);
-      })  
+      })
+      .catch(e => console.log(e));
 
     } else if (markers.length === 1) {
 
@@ -368,105 +399,226 @@ function App() {
 
   return (
     <div style={{display : 'flex'}}>
-      <div style={{display: 'flex', flexDirection: 'column', flex: '1', alignItems: 'center', padding: '10px', maxHeight: '95vh', maxWidth: '300px'}}>
+      <div style={{display: 'flex', flexDirection: 'column', flex: '1', alignItems: 'center', padding: '10px', maxHeight: '97vh', maxWidth: '300px'}}>
         <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
           <h1 style={{margin: '0'}}>Park Finder</h1>
           <h5 style={{margin: '0'}}>Created by Tam Lam</h5>
         </div>
-        <div style={{display: 'flex', marginTop: '30px'}}>
-          <Button
-            onClick={findParks}
-            variant="contained"
-            style={{margin: '5px'}}
-            startIcon={<SearchIcon />}
-          >
-            Find Parks
-          </Button>
-          <TextField id="outlined-basic" label="Range (m)" variant="outlined" style={{maxWidth: '130px'}}
-            value={range}
-            onChange={(e) => {
-              console.log(e.target.value)
-              const validInput = /^[0-9\b]+$/;
-              if (e.target.value === '' || validInput.test(e.target.value)) {
-                if (Number.isInteger(parseInt(e.target.value))) {
-                  console.log('lololoololol')
-                  setRange(parseInt(e.target.value));
+        <div style={{display: 'flex', marginTop: '40px', marginBottom: '20px', flexDirection: 'column'}}>
+          <div style={{margin: '5px', display: 'flex', flexWrap: 'wrap'}}>
+            <TextField type="number" id="outlined-basic" label="Range (km)" variant="outlined" size="small" style={{maxWidth: '130px', position: 'relative', top: '-1px', marginRight: '5px'}}
+              value={userRange}
+              onChange={(e) => {
+                console.log(e.target.value)
+                const validInput = /^[0-9\b]+$/;
+                if (e.target.value === '' || validInput.test(e.target.value)) {
+                    setUserRange(parseInt(e.target.value));
+                    if (e.target.value !== '')
+                      setRange(parseInt(e.target.value) * 1000);
+                  
                 }
-              }
-            }}
-          /> 
+              }}
+            />
+     
+            <Button
+              onClick={removeAllMarkers}
+              variant="contained"
+              color={'error'}
+              style={{height: '40px', position: 'relative', bottom: '1px', marginLeft: '5px'}}
+              startIcon={<DeleteIcon />}
+            >
+              Clear All
+            </Button>
+          </div>
+            <Button
+              onClick={findParks}
+              variant="contained"
+              style={{margin: '5px', backgroundColor: '#00b090'}}
+              startIcon={<SearchIcon />}
+            >
+              Find Parks
+            </Button>
         </div>
         <img onClick={locateUser} style={{width: '40px', cursor: 'pointer', position: 'absolute', right: '10px', zIndex: '999', bottom: '200px', borderRadius: '2px'}} src={locateMeIcon}/>
-        <Button
-          onClick={removeAllMarkers}
-          variant="contained"
-          color={'error'}
-          style={{margin: '5px'}}
-          startIcon={<DeleteIcon />}
-        >
-          Clear All
-        </Button>
-        <div style={{overflow: 'auto', width: '95%', height: '40vh'}}>
-          {markers.map((marker, index) => 
-            marker.address ? 
-              <h5
-                key={index}
-                onClick={() => {
-                  mapRef.current.panTo({lat: marker.lat, lng: marker.lng});
-                  setSelected(marker);
-                  setSelectedPark(null);
-                }}
-                style={{cursor: 'pointer'}}
-              >
-                {marker.address}
-              </h5>
-              :
-              <h5
-                key={index}
-                onClick={() => {
-                  mapRef.current.panTo({lat: marker.lat, lng: marker.lng});
-                  setSelected(marker);
-                  setSelectedPark(null);
-                }}
-                style={{cursor: 'pointer'}}
-              >
-                Point {index + 1}
-              </h5>
-          )}
-        </div>
+
+        <>
+          {markers.length > 0 ?
+          <>
+            <Paper
+              elevation={0}
+              style={{
+                width: '90%',
+                margin: '10px',
+                backgroundColor: '#e9e9ed',
+                display: 'flex',
+                justifyContent: 'center',
+                fontWeight: 'bold'
+              }}
+            >
+              {markers.length > 0 ? <p style={{margin: '5px', padding: '15px'}}>MARKERS</p> : null} 
+            </Paper> 
+            
+            <Paper style={{overflow: 'auto', width: '90%', height: '40vh'}}>
+              <List>
+                {markers.map((marker, index) => marker.address ?
+            
+            
+              
+                  <div>
+                    <ListItem disablePadding>
+                      <ListItemButton
+                        key={index}
+                        onClick={() => {
+                          mapRef.current.panTo({lat: marker.lat, lng: marker.lng});
+                          setSelected(marker);
+                          setSelectedPark(null);
+                        }}
+                      >
+                        {/* <ListItemText primary={marker.address} /> */}
+                        <h5 style={{margin: '0', fontWeight: 'normal'}}>{marker.address}</h5>
+                      </ListItemButton>
+                    </ListItem>
+                    <>
+                      { index < markers.length - 1 ?
+                        <Divider light={true} variant={'middle'}/> : null
+                      }
+                    </>
+                  </div>
+                  :
+                  <div>
+                    <ListItem disablePadding>
+                      <ListItemButton
+                        key={index}
+                        onClick={() => {
+                          mapRef.current.panTo({lat: marker.lat, lng: marker.lng});
+                          setSelected(marker);
+                          setSelectedPark(null);
+                        }}
+                      >
+                        {/* <ListItemText primary={`Point ${index + 1}`} /> */}
+                        <h5 style={{margin: '0', fontWeight: 'normal'}}>{`Point ${index + 1}`}</h5>
+                          
+                      </ListItemButton>
+                    </ListItem>
+                    <>
+                      { index < markers.length - 1 ?
+                        <Divider light={true} variant={'middle'}/> : null
+                      }
+                    </>
+                  </div>
+                )}
+              </List>
+            </Paper>
+          </>
+          :
+          null
+          }
+        </>
+
         
-        <ToggleButtonGroup
+        
+
+
+      {parks.length > 0 ?
+        <>
+          <Paper
+            elevation={0}
+            style={{
+              width: '90%',
+              marginBottom: '10px',
+              backgroundColor: '#e9e9ed',
+              display: 'flex',
+              justifyContent: 'center',
+              marginTop: '30px'
+            }}
+          >
+            {/* {!valid ? <p style={{color: 'red'}}>Given points not in range of each other</p> : null} */}
+            {parks.length > 0 ? <p style={{margin: '5px', padding: '15px', fontWeight: 'bold'}}>{parks.length} PARKS FOUND</p> : null} 
+          </Paper> 
+          <Paper style={{overflow: 'auto', width: '90%', height: '50vh'}}>
+            {parks.map((park, index) => 
+              <div>
+                <ListItem disablePadding>
+                  <ListItemButton
+                    key={index}
+                    style={{margin:'0', cursor: 'pointer'}}
+                    onClick={() => {
+                      setSelectedPark(park);
+                      setSelected(null);
+                      // mapRef.current.panTo({lat: park.geometry.location.lat, lng: park.geometry.location.lng});
+                    }}
+                  >
+                    {/* <ListItemText primary={marker.address} /> */}
+                    <h5 style={{margin: '0', fontWeight: 'normal'}}>{park.name}</h5>
+                  </ListItemButton>
+                </ListItem>
+                <>
+                  { index < parks.length - 1 ?
+                    <Divider light={true} variant={'middle'}/> : null
+                  }
+                </>
+              </div>
+            )}
+          </Paper>
+        </>
+      :
+        null
+      }
+
+
+
+
+
+
+
+
+
+
+          <ToggleButtonGroup
           value={markerType}
           exclusive
           onChange={handleMarkerType}
           style={{position: 'absolute', right: '80px', bottom: '28px'}}
           sx={{zIndex: '100'}}
         >
-          <ToggleButton value="red">
-            <PinDropIcon color={'error'}/>
+          <ToggleButton value="red" selectedColor="#ffd1d1">
+            {markerType === 'red' ? 
+              <PinDropIcon color={'error'}/>
+              :
+              <PinDropIcon/>
+            }
             <Tooltip
               title="Use this to add user locations"
               componentsProps={{
                 tooltip: {
                   sx: {
-                    fontSize: "0.9em"
+                    fontSize: "0.9em",
+                    bottom: '4px'
                   }
                 }
               }}
+              placement={'top'}
               arrow
             >
               
               <span>Marker</span>
             </Tooltip>
           </ToggleButton>
-          <ToggleButton value="blue" >
-            <PinDropIcon color={'primary'}/>
+          <ToggleButton value="blue" selectedColor="#d4e7ff">
+            {markerType === 'blue' ? 
+              <PinDropIcon color={'primary'}/>
+              :
+              <PinDropIcon/>
+            }
+            
             <Tooltip 
               title="If not satisfied with search results, use this to add points at locations where the search may have missed and re-run the search"
               componentsProps={{
                 tooltip: {
                   sx: {
-                    fontSize: "0.9em"
+                    fontSize: "0.9em",
+                    bottom: '4px',
+                    right: '50px'
                   }
                 }
               }}
@@ -477,26 +629,19 @@ function App() {
             </Tooltip>
           </ToggleButton>
         </ToggleButtonGroup>
-        
-        <div style={{overflow: 'auto', width: '95%'}}>
-          {!valid ? <p style={{color: 'red'}}>Given points not in range of each other</p> : null}
-          {parks.length > 0 ? <p>Parks found: {parks.length}</p> : null}  
-          {parks.map((park, index) => 
-            <h5
-              key={index}
-              style={{margin:'0', cursor: 'pointer'}}
-              onClick={() => {
-                setSelectedPark(park);
-                setSelected(null);
-                // mapRef.current.panTo({lat: park.geometry.location.lat, lng: park.geometry.location.lng});
-              }}
-            >
-              {park.name}
-            </h5>
-          )}
-        </div>
       </div>
       <div style={{flex : '3', position: 'relative'}}>
+        
+        
+        
+        <Snackbar open={openError} autoHideDuration={6000} onClose={handleCloseError} anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}>
+          <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
+            Given markers not in range of each other
+          </Alert>
+        </Snackbar>
+
+
+
         <div style={{position: 'absolute', top: '10px', left: '50%', zIndex: '50', translate: '-50%', zIndex: '998', width: '30%', maxWidth: '400px'}}>
           <Autocomplete panMap={panMap}/>
         </div>
@@ -522,6 +667,7 @@ function App() {
             disableDoubleClickZoom: 'true',
             clickableIcons : false,
             styles: mapStyles,
+            fullscreenControl: false
           }}
         >
           {currMarker ? (<Marker
@@ -547,13 +693,13 @@ function App() {
               animation={2}
             />
           )}
-          {searchMarker ?
+          {/* {searchMarker ?
             <Marker
               position={{lat: searchMarker.lat, lng: searchMarker.lng}}            
               icon={'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png'}
             /> 
             : null
-          }
+          } */}
           {blueMarkers.map((marker, index) => 
             <Marker
               position={{lat: marker.lat, lng: marker.lng}}            

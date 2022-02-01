@@ -44,6 +44,8 @@ import { BorderTopRounded } from '@mui/icons-material';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 
+import {Helmet} from "react-helmet";
+
 // console.log = function() {}
 
 function App() {
@@ -401,6 +403,11 @@ function App() {
 
   return (
     <div style={{display : 'flex'}}>
+      <Helmet>
+        <meta charSet="utf-8" />
+        <title>Park Finder</title>
+        <link rel="canonical" href="tamlam.tech" />
+      </Helmet>
       <div style={{display: 'flex', flexDirection: 'column', flex: '1', alignItems: 'center', padding: '10px', maxHeight: '97vh', maxWidth: '300px'}}>
         <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
           <h1 style={{margin: '0'}}>Park Finder</h1>

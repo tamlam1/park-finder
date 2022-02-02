@@ -561,7 +561,7 @@ function App() {
                 If multiple markers are placed, the parks common in the ranges of the all markers are shown instead. Note, all markers must be in range of each other for this to work.
               </Typography>
               <Typography gutterBottom>
-                If you are not satisfied with the search results, the <b>Extra Search Point</b> toggle in the bottom right can be used to add extra search markers on the map. Extra searches will be done around these markers and any valid results will be displayed along with the original search. <b>Use sparingly as each extra search point marker will add ~6 seconds to the search time.</b>
+                If you are not satisfied with the search results, the <b>Extra Search Point</b> toggle in the bottom right can be used to add extra search markers on the map (alongside the normal red markers). Extra searches will be done around these markers and any valid results will be displayed along with the original search. <b>Use sparingly as each extra search point marker will add ~6 seconds to the search time.</b>
               </Typography>
             </DialogContent>
           </BootstrapDialog>

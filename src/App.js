@@ -48,6 +48,14 @@ import {Helmet} from "react-helmet";
 
 import IconButton from '@mui/material/IconButton';
 
+import PropTypes from 'prop-types';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import CloseIcon from '@mui/icons-material/Close';
+import Typography from '@mui/material/Typography';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+
 console.log = function() {}
 
 function App() {
@@ -61,6 +69,53 @@ function App() {
       backgroundColor: selectedcolor
     }
   }));
+
+  const BootstrapDialog = styled(Dialog)(({ theme }) => ({
+    '& .MuiDialogContent-root': {
+      padding: theme.spacing(2),
+    },
+    '& .MuiDialogActions-root': {
+      padding: theme.spacing(1),
+    },
+  }));
+
+  const BootstrapDialogTitle = (props) => {
+    const { children, onClose, ...other } = props;
+  
+    return (
+      <DialogTitle sx={{ m: 0, p: 2 }} {...other}>
+        {children}
+        {onClose ? (
+          <IconButton
+            aria-label="close"
+            onClick={onClose}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        ) : null}
+      </DialogTitle>
+    );
+  };
+
+  BootstrapDialogTitle.propTypes = {
+    children: PropTypes.node,
+    onClose: PropTypes.func.isRequired,
+  };
+  
+  const [openHelp, setOpenHelp] = React.useState(false);
+
+  const handleClickOpenHelp = () => {
+    setOpenHelp(true);
+  };
+  const handleCloseHelp = () => {
+    setOpenHelp(false);
+  };
 
   const mapContainerStyle = {
     width: '100%',
@@ -473,17 +528,44 @@ function App() {
               Clear All
             </Button>
           </div>
-            <Button
-              onClick={findParks}
-              variant="contained"
-              style={{margin: '5px', backgroundColor: '#00b090'}}
-              startIcon={<SearchIcon />}
-            >
-              Find Parks
-            </Button>
+            <div style={{display: 'flex', alignItems: 'center'}}>
+              <Button
+                onClick={findParks}
+                variant="contained"
+                style={{margin: '5px', backgroundColor: '#00b090', width: '85%'}}
+                startIcon={<SearchIcon />}
+              >
+                Find Parks
+              </Button>
+              <HelpOutlineIcon
+                style={{color: '#8c8c8c', cursor: 'pointer'}}
+                onClick={handleClickOpenHelp}
+              />
+            </div>
         </div>
         <img onClick={locateUser} style={{width: '40px', cursor: 'pointer', position: 'absolute', right: '10px', zIndex: '999', bottom: '200px', borderRadius: '2px'}} src={locateMeIcon}/>
-
+        <div>
+          
+          <BootstrapDialog
+            onClose={handleCloseHelp}
+            open={openHelp}
+          >
+            <BootstrapDialogTitle id="customized-dialog-title" onClose={handleCloseHelp}>
+              How to Use Park Finder
+            </BootstrapDialogTitle>
+            <DialogContent dividers>
+              <Typography gutterBottom>
+                To find parks around a single area, simply click on the map to add a marker and click the <b>Find Parks</b> button.
+              </Typography>
+              <Typography gutterBottom>
+                If multiple markers are placed, the parks common in the ranges of the all markers are shown instead. Note, all markers must be in range of each other for this to work.
+              </Typography>
+              <Typography gutterBottom>
+                If you are not satisfied with the search results, the <b>Extra Search Point</b> toggle in the bottom right can be used to add extra search markers on the map. Extra searches will be done around these markers and any valid results will be displayed along with the original search. <b>Use sparingly as each extra search point marker will add ~6 seconds to the search time.</b>
+              </Typography>
+            </DialogContent>
+          </BootstrapDialog>
+        </div>
         <>
           {markers.length > 0 ?
           <>
@@ -504,9 +586,9 @@ function App() {
             <Paper style={{overflow: 'auto', width: '90%', height: '40vh'}}>
               <List>
                 {markers.map((marker, index) => marker.address ?
-            
-            
-              
+
+
+
                   <div key={index}>
                     <ListItem
                       disablePadding

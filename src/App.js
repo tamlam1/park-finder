@@ -529,18 +529,19 @@ function App() {
             </Button>
           </div>
             <div style={{display: 'flex', alignItems: 'center'}}>
-              <Button
-                onClick={findParks}
-                variant="contained"
-                style={{margin: '5px', backgroundColor: '#00b090', width: '85%'}}
-                startIcon={<SearchIcon />}
-              >
-                Find Parks
-              </Button>
               <HelpOutlineIcon
                 style={{color: '#8c8c8c', cursor: 'pointer'}}
                 onClick={handleClickOpenHelp}
               />
+              <Button
+                onClick={findParks}
+                variant="contained"
+                style={{margin: '5px', backgroundColor: '#00b090', width: '100%'}}
+                startIcon={<SearchIcon />}
+              >
+                Find Parks
+              </Button>
+              
             </div>
         </div>
         <img onClick={locateUser} style={{width: '40px', cursor: 'pointer', position: 'absolute', right: '10px', zIndex: '999', bottom: '200px', borderRadius: '2px'}} src={locateMeIcon}/>

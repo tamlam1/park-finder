@@ -46,17 +46,19 @@ import Alert from '@mui/material/Alert';
 
 import {Helmet} from "react-helmet";
 
-// console.log = function() {}
+import IconButton from '@mui/material/IconButton';
+
+console.log = function() {}
 
 function App() {
   // https://stackoverflow.com/questions/69707814/set-selected-background-color-of-mui-togglebutton
-  const ToggleButton = styled(MuiToggleButton)(({ selectedColor }) => ({
+  const ToggleButton = styled(MuiToggleButton)(({ selectedcolor }) => ({
     "&:hover, &": {
       backgroundColor: "white",
     },
     "&.Mui-selected, &.Mui-selected:hover" : {
 
-      backgroundColor: selectedColor
+      backgroundColor: selectedcolor
     }
   }));
 
@@ -96,6 +98,25 @@ function App() {
 
   const [openError, setOpenError] = React.useState(false);
 
+
+  const [openEmpty, setOpenEmpty] = React.useState(false);
+
+  const handleClickEmpty = () => {
+    setOpenEmpty(true);
+  };
+
+  const handleCloseEmpty = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setOpenEmpty(false);
+  };
+
+
+
+
+  
   const handleClickError = () => {
     setOpenError(true);
   };
@@ -109,7 +130,7 @@ function App() {
   };
 
 
-
+  
 
   const handleClose = () => {
     setOpen(false);
@@ -121,17 +142,19 @@ function App() {
   const onMapClick = (e) => {
     // console.log(markerType);
     if (markerType === 'red') {
-      setCurrMarker({
+      const newMarker = {
         valid: true,
         address: null,
         lat: e.latLng.lat(),
         lng: e.latLng.lng()
-      });
+      };
+      confirmMarker(newMarker);
     } else {
-      setCurrBlueMarker({
+      const newMarker = {
         lat: e.latLng.lat(),
         lng: e.latLng.lng()
-      });
+      };
+      confirmBlueMarker(newMarker);
     }
     setSelected(null);
     setSelectedPark(null);
@@ -178,6 +201,14 @@ function App() {
     return validParks
   }
 
+  const removeMarkerFromList = ( listMarker ) => {
+    var removeArr = markers.filter((marker) => marker.lat !== listMarker.lat && marker.lng !== listMarker.lng);
+    // console.log(removeArr);
+    setMarkers([...removeArr]);
+    setSelected(null);
+    localStorage.setItem('markers', JSON.stringify([...removeArr]));
+  }
+
   const checkInBoundsBlue = ( blueMarkerArr ) => {
     var validMarker = [];
     for (var count = 0; count < blueMarkerArr.length; count++) {
@@ -205,19 +236,18 @@ function App() {
 
     // console.log({address, lat, lng})
     // console.log({valid: true, address, lat, lng})
-    setCurrMarker({valid: null, address, lat, lng})
+    const newMarker = {valid: null, address, lat, lng}
+    confirmMarker(newMarker);
   }
 
-  const confirmMarker = () => {
-    setMarkers([...markers, currMarker]);
-    localStorage.setItem('markers', JSON.stringify([...markers, currMarker]));
-    setCurrMarker(null);
+  const confirmMarker = (newMarker) => {
+    setMarkers([...markers, newMarker]);
+    localStorage.setItem('markers', JSON.stringify([...markers, newMarker]));
   }
 
-  const confirmBlueMarker = () => {
-    setBlueMarkers([...blueMarkers, currBlueMarker]);
-    localStorage.setItem('blueMarkers', JSON.stringify([...blueMarkers, currBlueMarker]));
-    setCurrBlueMarker(null);
+  const confirmBlueMarker = (newMarker) => {
+    setBlueMarkers([...blueMarkers, newMarker]);
+    localStorage.setItem('blueMarkers', JSON.stringify([...blueMarkers, newMarker]));
   }
 
   const locateUser = () => {
@@ -329,6 +359,10 @@ function App() {
     if (markers.length !== 0) {
       handleToggle();
       setLoading(true);
+    }
+
+    if (markers.length === 0) {
+      handleClickEmpty();
     }
 
     
@@ -473,10 +507,20 @@ function App() {
             
             
               
-                  <div>
-                    <ListItem disablePadding>
+                  <div key={index}>
+                    <ListItem
+                      disablePadding
+                      secondaryAction={
+                        <IconButton
+                          edge="end"
+                          onClick={() => removeMarkerFromList(marker)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      }
+                    >
                       <ListItemButton
-                        key={index}
+                        
                         onClick={() => {
                           mapRef.current.panTo({lat: marker.lat, lng: marker.lng});
                           setSelected(marker);
@@ -495,7 +539,17 @@ function App() {
                   </div>
                   :
                   <div>
-                    <ListItem disablePadding>
+                    <ListItem
+                      disablePadding
+                      secondaryAction={
+                        <IconButton
+                          edge="end"
+                          onClick={() => removeMarkerFromList(marker)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      }
+                    >
                       <ListItemButton
                         key={index}
                         onClick={() => {
@@ -546,7 +600,7 @@ function App() {
           </Paper> 
           <Paper style={{overflow: 'auto', width: '90%', height: '50vh'}}>
             {parks.map((park, index) => 
-              <div>
+              <div key={index}>
                 <ListItem disablePadding>
                   <ListItemButton
                     key={index}
@@ -590,7 +644,7 @@ function App() {
           style={{position: 'absolute', right: '80px', bottom: '28px'}}
           sx={{zIndex: '100'}}
         >
-          <ToggleButton value="red" selectedColor="#ffd1d1">
+          <ToggleButton value="red" selectedcolor="#ffd1d1">
             {markerType === 'red' ? 
               <PinDropIcon color={'error'}/>
               :
@@ -613,7 +667,7 @@ function App() {
               <span>Marker</span>
             </Tooltip>
           </ToggleButton>
-          <ToggleButton value="blue" selectedColor="#d4e7ff">
+          <ToggleButton value="blue" selectedcolor="#d4e7ff">
             {markerType === 'blue' ? 
               <PinDropIcon color={'primary'}/>
               :
@@ -643,9 +697,15 @@ function App() {
         
         
         
-        <Snackbar open={openError} autoHideDuration={6000} onClose={handleCloseError} anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}>
+        <Snackbar open={openError} autoHideDuration={3000} onClose={handleCloseError} anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}>
           <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
             Given markers not in range of each other
+          </Alert>
+        </Snackbar>
+
+        <Snackbar open={openEmpty} autoHideDuration={3000} onClose={handleCloseEmpty} anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}>
+          <Alert onClose={handleCloseEmpty} severity="error" sx={{ width: '100%' }}>
+            There are no markers on the map
           </Alert>
         </Snackbar>
 
@@ -679,17 +739,6 @@ function App() {
             fullscreenControl: false
           }}
         >
-          {currMarker ? (<Marker
-            position={{lat: currMarker.lat, lng: currMarker.lng}}
-            opacity={0.5}
-            onClick={confirmMarker}
-          />) : null}
-          {currBlueMarker ? (<Marker
-            position={{lat: currBlueMarker.lat, lng: currBlueMarker.lng}}
-            opacity={0.5}
-            onClick={confirmBlueMarker}
-            icon={'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'}
-          />) : null}
           {markers.map((marker, index) => 
             <Marker
               position={{lat: marker.lat, lng: marker.lng}}            

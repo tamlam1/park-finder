@@ -742,8 +742,8 @@ function App() {
 
 
 
-        <div style={{position: 'absolute', top: '10px', left: '50%', zIndex: '50', translate: '-50%', zIndex: '998', width: '30%', maxWidth: '400px', minWidth: '200px'}}>
-          <Autocomplete className="search" panMap={panMap}/>
+        <div className="search">
+          <Autocomplete panMap={panMap}/>
         </div>
         {/* <Backdrop
         

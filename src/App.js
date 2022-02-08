@@ -56,6 +56,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import Typography from '@mui/material/Typography';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
+import './App.css';
+
 console.log = function() {}
 
 function App() {
@@ -119,7 +121,7 @@ function App() {
 
   const mapContainerStyle = {
     width: '100%',
-    height: '100vh',
+    height: '100%',
     flex: '3'
   };
 
@@ -491,19 +493,19 @@ function App() {
   }
 
   return (
-    <div style={{display : 'flex'}}>
+    <div className="mainContainer">
       <Helmet>
         <meta charSet="utf-8" />
         <title>Park Finder</title>
         <link rel="canonical" href="tamlam.tech" />
       </Helmet>
-      <div style={{display: 'flex', flexDirection: 'column', flex: '1', alignItems: 'center', padding: '10px', maxHeight: '97vh', maxWidth: '300px'}}>
+      <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '10px', maxHeight: '97vh', maxWidth: '400px'}}>
         <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
           <h1 style={{margin: '0'}}>Park Finder</h1>
           <h5 style={{margin: '0'}}>Created by Tam Lam</h5>
         </div>
-        <div style={{display: 'flex', marginTop: '40px', marginBottom: '20px', flexDirection: 'column'}}>
-          <div style={{margin: '5px', display: 'flex', flexWrap: 'wrap'}}>
+        <div style={{display: 'flex', marginTop: '40px', marginBottom: '20px', flexDirection: 'column', width: '95%'}}>
+          <div style={{margin: '5px', display: 'flex'}}>
             <TextField type="number" id="outlined-basic" label="Range (km)" variant="outlined" size="small" style={{maxWidth: '130px', position: 'relative', top: '-1px', marginRight: '5px'}}
               value={userRange}
               onChange={(e) => {
@@ -522,13 +524,13 @@ function App() {
               onClick={removeAllMarkers}
               variant="contained"
               color={'error'}
-              style={{height: '40px', position: 'relative', bottom: '1px', marginLeft: '5px'}}
+              style={{height: '40px', position: 'relative', bottom: '1px', marginLeft: '5px', width: '100%'}}
               startIcon={<DeleteIcon />}
             >
               Clear All
             </Button>
           </div>
-            <div style={{display: 'flex', alignItems: 'center'}}>
+            <div style={{display: 'flex', alignItems: 'center', width: '100%'}}>
               <HelpOutlineIcon
                 style={{color: '#8c8c8c', cursor: 'pointer'}}
                 onClick={handleClickOpenHelp}
@@ -544,7 +546,6 @@ function App() {
               
             </div>
         </div>
-        <img onClick={locateUser} style={{width: '40px', cursor: 'pointer', position: 'absolute', right: '10px', zIndex: '999', bottom: '200px', borderRadius: '2px'}} src={locateMeIcon}/>
         <div>
           
           <BootstrapDialog
@@ -581,10 +582,10 @@ function App() {
                 fontWeight: 'bold'
               }}
             >
-              {markers.length > 0 ? <p style={{margin: '5px', padding: '15px'}}>MARKERS</p> : null} 
+              {markers.length > 0 ? <p className="scrolls" style={{margin: '5px', padding: '15px'}}>MARKERS</p> : null} 
             </Paper> 
             
-            <Paper style={{overflow: 'auto', width: '90%', height: '40vh'}}>
+            <Paper className="scrolls" style={{overflow: 'auto', width: '90%', height: '40vh', marginBottom: '10px'}}>
               <List>
                 {markers.map((marker, index) => marker.address ?
 
@@ -669,19 +670,20 @@ function App() {
         <>
           <Paper
             elevation={0}
+            classname="parksfound"
             style={{
               width: '90%',
               marginBottom: '10px',
               backgroundColor: '#e9e9ed',
               display: 'flex',
               justifyContent: 'center',
-              marginTop: '30px'
+              
             }}
           >
             {/* {!valid ? <p style={{color: 'red'}}>Given points not in range of each other</p> : null} */}
             {parks.length > 0 ? <p style={{margin: '5px', padding: '15px', fontWeight: 'bold'}}>{parks.length} PARKS FOUND</p> : null} 
           </Paper> 
-          <Paper style={{overflow: 'auto', width: '90%', height: '50vh'}}>
+          <Paper className="scrolls" style={{overflow: 'auto', width: '90%', height: '50vh'}}>
             {parks.map((park, index) => 
               <div key={index}>
                 <ListItem disablePadding>
@@ -720,7 +722,58 @@ function App() {
 
 
 
-          <ToggleButtonGroup
+
+      </div>
+      <div className="halvesmap">
+        
+        
+        
+        <Snackbar open={openError} autoHideDuration={3000} onClose={handleCloseError} anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}>
+          <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
+            Given markers not in range of each other
+          </Alert>
+        </Snackbar>
+
+        <Snackbar open={openEmpty} autoHideDuration={3000} onClose={handleCloseEmpty} anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}>
+          <Alert onClose={handleCloseEmpty} severity="error" sx={{ width: '100%' }}>
+            There are no markers on the map
+          </Alert>
+        </Snackbar>
+
+
+
+        <div style={{position: 'absolute', top: '10px', left: '50%', zIndex: '50', translate: '-50%', zIndex: '998', width: '30%', maxWidth: '400px', minWidth: '200px'}}>
+          <Autocomplete className="search" panMap={panMap}/>
+        </div>
+        {/* <Backdrop
+        
+          sx={{ position: 'absolute', color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+          open={open}
+        >
+        </Backdrop> */}
+        {/* <CircularProgress style={{position: 'absolute', top: '50%', left: '50%', zIndex: '50'}} color="inherit" /> */}
+        {loading ?
+          <CircularProgress size={100} style={{position: 'absolute', top: '50%', left: '50%', zIndex: '50', translate: '-50%', color: '#404040'}}/>
+          :
+          null
+        }
+        <GoogleMap
+          mapContainerStyle={mapContainerStyle}
+          zoom={10}
+          center={center}
+          onClick={(e) => onMapClick(e)}
+          onLoad={onMapLoad}
+          options={{
+            disableDoubleClickZoom: 'true',
+            clickableIcons : false,
+            styles: mapStyles,
+            fullscreenControl: false,
+            mapTypeControl: false
+          }}
+        >
+          <img onClick={locateUser} style={{width: '40px', cursor: 'pointer', position: 'absolute', right: '10px', zIndex: '999', bottom: '200px', borderRadius: '2px'}} src={locateMeIcon}/>
+
+        <ToggleButtonGroup
           value={markerType}
           exclusive
           onChange={handleMarkerType}
@@ -747,7 +800,7 @@ function App() {
               arrow
             >
               
-              <span>Marker</span>
+              <span className="toggle">Marker</span>
             </Tooltip>
           </ToggleButton>
           <ToggleButton value="blue" selectedcolor="#d4e7ff">
@@ -771,57 +824,10 @@ function App() {
               arrow
             >
             
-              <span>Extra Search Point</span>
+              <span className="toggle">Extra Search Point</span>
             </Tooltip>
           </ToggleButton>
         </ToggleButtonGroup>
-      </div>
-      <div style={{flex : '3', position: 'relative'}}>
-        
-        
-        
-        <Snackbar open={openError} autoHideDuration={3000} onClose={handleCloseError} anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}>
-          <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
-            Given markers not in range of each other
-          </Alert>
-        </Snackbar>
-
-        <Snackbar open={openEmpty} autoHideDuration={3000} onClose={handleCloseEmpty} anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}>
-          <Alert onClose={handleCloseEmpty} severity="error" sx={{ width: '100%' }}>
-            There are no markers on the map
-          </Alert>
-        </Snackbar>
-
-
-
-        <div style={{position: 'absolute', top: '10px', left: '50%', zIndex: '50', translate: '-50%', zIndex: '998', width: '30%', maxWidth: '400px'}}>
-          <Autocomplete panMap={panMap}/>
-        </div>
-        {/* <Backdrop
-        
-          sx={{ position: 'absolute', color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
-          open={open}
-        >
-        </Backdrop> */}
-        {/* <CircularProgress style={{position: 'absolute', top: '50%', left: '50%', zIndex: '50'}} color="inherit" /> */}
-        {loading ?
-          <CircularProgress size={100} style={{position: 'absolute', top: '50%', left: '50%', zIndex: '50', translate: '-50%', color: '#404040'}}/>
-          :
-          null
-        }
-        <GoogleMap
-          mapContainerStyle={mapContainerStyle}
-          zoom={10}
-          center={center}
-          onClick={(e) => onMapClick(e)}
-          onLoad={onMapLoad}
-          options={{
-            disableDoubleClickZoom: 'true',
-            clickableIcons : false,
-            styles: mapStyles,
-            fullscreenControl: false
-          }}
-        >
           {markers.map((marker, index) => 
             <Marker
               position={{lat: marker.lat, lng: marker.lng}}            

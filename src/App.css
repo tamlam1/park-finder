@@ -36,3 +36,50 @@
     transform: rotate(360deg);
   }
 }
+
+.halvesmap {
+  flex : 3;
+  position: relative;
+  min-width: 300px;
+  height: 100vh;
+}
+
+.mainContainer {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 700px) {
+  .toggle {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .scrolls {
+    display: none;
+  }
+  .halves {
+    height: 50px;
+    align-items: center;
+    justify-content: center;
+
+  }
+  .search {
+    right: 0px;
+    left: 500px;
+  }
+  .mapContainerStyle {
+    height: 20px;
+  }
+  .halvesmap {
+    height: 56vh;
+  }
+  .mainContainer {
+    align-items: center;
+    justify-content: center;
+  }
+  .parksfound {
+    margin-top: 5px;
+  }
+}
